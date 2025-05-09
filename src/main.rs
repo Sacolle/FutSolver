@@ -31,7 +31,7 @@ impl State {
 }
 
 //https://stackoverflow.com/questions/58079910/find-all-ways-to-partition-a-set-into-given-sized-subsets
-fn groups_iterative<T: Copy>(input: &[T], input_size: usize, group_size: usize) -> usize{
+fn groups_iterative<T: Copy>(input: &[T], input_size: usize, group_size: usize) -> BigUint{
 	let mut bookkeep: Vec<State> = vec![];
 
 	let mut groups: Vec<(Vec<Option<T>>,usize)> = vec![(vec![None; group_size], 0); input_size / group_size];
