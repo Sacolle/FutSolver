@@ -37,7 +37,7 @@ fn groups_iterative<T: Copy>(input: &[T], input_size: usize, group_size: usize) 
 	let mut groups: Vec<(Vec<Option<T>>,usize)> = vec![(vec![None; group_size], 0); input_size / group_size];
 	let mut i = 0;
 
-	let mut num_of_solutions = 0usize;
+	let mut num_of_solutions = BigUint::ZERO;
 
 	while i < input_size || bookkeep.len() > 0{
 
@@ -57,12 +57,11 @@ fn groups_iterative<T: Copy>(input: &[T], input_size: usize, group_size: usize) 
 		}else{
 			//aqui a list está completa, mas o bookeep não necessariamente está vazio
 			//ou seja, groups é uma solução
-			if num_of_solutions % 10000000 == 0 {
+			/*if num_of_solutions % 10000000 == 0 {
 				println!("■");
-			}
-			num_of_solutions += 1;
+			}*/
+			num_of_solutions += 1u32;
 		}
-
 		//pega a ação no topo da pilha
 		let Some(State { num_i, group_i, group_sizes }) = bookkeep.pop() else {
 			// se não tem mais ações para tomar, acabou
@@ -83,7 +82,7 @@ fn groups_iterative<T: Copy>(input: &[T], input_size: usize, group_size: usize) 
 		i = num_i + 1;
 	}
 
-	num_of_solutions += 1;
+	num_of_solutions += 1u32;
 	return num_of_solutions;
 }
 
