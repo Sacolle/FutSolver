@@ -1,4 +1,5 @@
-use std::collections::BinaryHeap;
+use core::fmt;
+use std::{collections::BinaryHeap };
 
 struct State<const K: usize> {
 	num_i: usize,
@@ -8,22 +9,22 @@ struct State<const K: usize> {
 
 #[derive(Debug)]
 struct Solution<const N: usize> {
-	solution: [f64;N],
-	variancia: f64
+	pub solution: [f64;N],
+	pub amplitude: f64
 }
 
 impl<const N: usize> Solution<N> {
-	fn new(solution: &[f64;N], variancia: f64) -> Self{
+	fn new(solution: &[f64;N], amplitude: f64) -> Self{
 		Solution { 
 			solution: solution.clone(), 
-			variancia
+			amplitude
 		}
 	}
 }
 
 impl<const N:usize> Ord for Solution<N>{
 	fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-		self.variancia.total_cmp(&other.variancia)
+		self.amplitude.total_cmp(&other.amplitude)
 	}
 }
 
@@ -35,23 +36,25 @@ impl<const N:usize> PartialOrd for Solution<N>{
 
 impl<const N:usize> PartialEq for Solution<N>{
 	fn eq(&self, other: &Self) -> bool {
-		self.variancia == other.variancia
+		self.amplitude == other.amplitude
 	}
 }
 impl<const N:usize> Eq for Solution<N>{}
-
-fn variancia<const K: usize>(meta: &[(usize, f64);K], average: f64) -> f64 {
+/* 
+fn variancia<const N:usize, const K: usize>(meta: &[(usize, f64);K], average: f64) -> f64 {
 	meta.iter()
 		.fold(0.0f64, 
-			|acc, (_, sum)| acc + (sum - average).powf(2.0)
+			|acc, (_, sum)| acc + (sum - average * ((N/K) as f64)).powf(2.0)
 	) / (K as f64)
 }
+
+*/
 //https://stackoverflow.com/questions/58079910/find-all-ways-to-partition-a-set-into-given-sized-subsets
 
 //N is input size
 //K é o número de grupos
 // N/K é o tamanho de um grupo
-fn groups_iterative<const N: usize, const K: usize>(input: [f64;N], upper_bound: f64, average: f64) -> BinaryHeap<Solution<N>>{
+fn groups_iterative<const N: usize, const K: usize>(input: [f64;N], mut upper_bound: f64) -> BinaryHeap<Solution<N>>{
 
 	let mut groups: [f64;N] = [0.0f64; N];
 	let mut groups_meta: [(usize, f64);K] = [(0usize, 0.0f64); K];
@@ -81,26 +84,36 @@ fn groups_iterative<const N: usize, const K: usize>(input: [f64;N], upper_bound:
 				}
 			}
 		}else{
+			// get the min and the max of solutions
+			let (s_min, s_max) = groups_meta.iter()
+				.fold((f64::MAX, f64::MIN), |(acc_min, acc_max), (_, v)| {
+					(f64::min(*v, acc_min), f64::max(*v, acc_max))
+				});
+			// if the new solution is lower then the upperbound, update the upperbound
+			// new optimization
+			if s_max < upper_bound {
+				upper_bound = s_max;
+			}
+			let amplitude = s_max - s_min;
 			//aqui a list está completa, mas o bookeep não necessariamente está vazio
 			//ou seja, groups é uma solução melhor que o upperbound
 			//se não coletou MAX_NUMBER_OF_SOLUTIONS, coleta
 			if num_of_solutions < MAX_NUMBER_OF_SOLUTIONS {
-				heap.push(Solution::new(&groups, variancia(&groups_meta, average)));
+				heap.push(Solution::new(&groups, amplitude));
 				num_of_solutions += 1;
 			}else{ 
-				//se não, como o topo da heap é a maior variância
-				//se a variância da solução atual for menor que a do topo
+				//se não, como o topo da heap é a maior amplitude
+				//se a amplitude da solução atual for menor que a do topo
 				//remove o topo e insere a nova na heap
-				let variance = variancia(&groups_meta, average);
 				let mut replace = false;
 				if let Some(sol) = heap.peek() {
-					if variance < sol.variancia {
+					if amplitude < sol.amplitude {
 						replace = true; //fazer because borrowchecker
 					}
 				};
 				if replace {
 					heap.pop();
-					heap.push(Solution::new(&groups, variance));
+					heap.push(Solution::new(&groups, amplitude));
 				}
 			}
 		}
@@ -182,11 +195,14 @@ fn main(){
 	//let permutations = fac(N)/(fac(N/K).pow(K as u32) * fac(K));
     //println!("total possible permutations for input: {}", permutations);
 
-	let upperbound = greedy_upper_bound::<24, 4>(inp);
+	let upperbound = greedy_upper_bound::<18, 3>(inp);
 	println!("upper bound solution: {}", upperbound);
-	let avg = inp.clone().into_iter().sum::<f64>() / 24.0f64;
+	//let avg = inp.clone().into_iter().sum::<f64>() / 18.0f64;
 
-	let groups_iter = groups_iterative::<24, 4>(inp, upperbound, avg);
-    println!("groups iter: {:?}", groups_iter);
+	let groups_iter = groups_iterative::<18, 3>(inp, upperbound);
 
+	//indo do menor para o maior
+	for solution in groups_iter.into_sorted_vec().into_iter().take(10) {
+		println!("Amplitude: {}\nSolução: {:?}", solution.amplitude, solution.solution);
+	}
 }
