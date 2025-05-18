@@ -76,9 +76,8 @@ fn groups_iterative<const N: usize, const K: usize>(input: [f64;N], mut upper_bo
 					break 'acess;
 				}else if groups_meta[j].0 < (N/K) { //N/K is the size of the group
 					//se a lista está incompleta 
-					//NOTE: checa aqui se estoraria o upperBound, 
-					//correto seria upper_bound - min(input), mas tem q testar primeiro	
-					if groups_meta[j].1 <= upper_bound {
+					//e se o adicionar o valor do item no grupo não estora o upperbound
+					if groups_meta[j].1 + input[i] <= upper_bound {
 						bookkeep.push(State { num_i: i, group_i: j, bk_meta: groups_meta.clone() });
 					}
 				}
@@ -134,9 +133,6 @@ fn groups_iterative<const N: usize, const K: usize>(input: [f64;N], mut upper_bo
 		//coloca o índice na posição certa
 		i = num_i + 1;
 	}
-
-	num_of_solutions += 1;
-
 	return heap;
 }
 
@@ -170,13 +166,13 @@ fn greedy_upper_bound<const N: usize, const K: usize>(input: [f64;N]) -> f64{
 //const N: usize = 24usize;
 //const K: usize = 4usize;
 
-fn get_input<const N: usize>() -> std::io::Result<[f64;N]>{
+fn get_input<const N: usize>(filename: &str) -> std::io::Result<[f64;N]>{
 	let mut inp = [0.0f64; N];
 
-	let contents = std::fs::read_to_string("input.txt")?;
+	let contents = std::fs::read_to_string(filename)?;
 	let mut nums = contents.split_whitespace().map(|w| w.parse::<f64>().unwrap()).collect::<Vec<f64>>();
 	if nums.len() != N {
-		panic!("entrada com tamanho incorreto, deve ser inserido 24 números!")
+		panic!("entrada com tamanho incorreto, deve ser inserido {} números!", N);
 	}
 	//ordena do maior pro menor
 	nums.sort_by(|a, b| b.partial_cmp(a).unwrap());
@@ -191,18 +187,20 @@ fn get_input<const N: usize>() -> std::io::Result<[f64;N]>{
 
 
 fn main(){
-	let inp = get_input().expect("puts, deu erro no IO");
-	//let permutations = fac(N)/(fac(N/K).pow(K as u32) * fac(K));
-    //println!("total possible permutations for input: {}", permutations);
+	let Some(filename) = std::env::args().nth(1) else {
+		panic!("Missing filename from arguments");
+	};
 
-	let upperbound = greedy_upper_bound::<18, 3>(inp);
+	let inp = get_input::<24>(filename.as_str())
+		.expect("puts, deu erro no IO");
+
+	let upperbound = greedy_upper_bound::<24, 4>(inp);
 	println!("upper bound solution: {}", upperbound);
-	//let avg = inp.clone().into_iter().sum::<f64>() / 18.0f64;
 
-	let groups_iter = groups_iterative::<18, 3>(inp, upperbound);
+	let groups_iter = groups_iterative::<24, 4>(inp, upperbound);
 
 	//indo do menor para o maior
-	for solution in groups_iter.into_sorted_vec().into_iter().take(10) {
-		println!("Amplitude: {}\nSolução: {:?}", solution.amplitude, solution.solution);
+	for Solution { solution, amplitude } in groups_iter.into_sorted_vec().into_iter().take(10) {
+		println!("Amplitude: {}\nSolução: {:?}", amplitude, solution);
 	}
 }
