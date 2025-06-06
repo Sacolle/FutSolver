@@ -1,11 +1,12 @@
-use futsolver::{get_input, greedy_upper_bound, groups_iterative, Solution};
+use futsolver::{greedy_upper_bound, groups_iterative, read_nums_from_file, Solution};
 
 fn main() {
     let Some(filename) = std::env::args().nth(1) else {
         panic!("Missing filename from arguments");
     };
 
-    let inp = get_input::<24>(filename.as_str()).expect("puts, deu erro no IO");
+    let inp = read_nums_from_file(filename.as_str()).expect("puts, deu erro no IO");
+    let inp = futsolver::prepare_input::<24>(inp);
 
     let upperbound = greedy_upper_bound::<24, 4>(inp);
     println!("upper bound solution: {}", upperbound);
